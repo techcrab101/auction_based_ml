@@ -62,8 +62,13 @@ print(colored('error matrix', 'yellow'))
 print(error_mat)
 print()
 
-cont_mat = p_mat/p_mat.sum(axis=1).reshape(curr_type_count,1)#p_mat/p_mat.sum(axis=0)
+curr_cont_mat = p_mat/p_mat.sum(axis=0)
+obj_cont_mat = p_mat/p_mat.sum(axis=1).reshape(curr_type_count,1)
 
-print('cont mat')
-print(cont_mat)
+print(colored('currency cont mat', 'yellow'))
+print(curr_cont_mat)
+print()
+
+print(colored('obj cont mat', 'yellow'))
+print(obj_cont_mat)
 print()
