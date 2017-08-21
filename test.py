@@ -76,12 +76,57 @@ print(colored('overall contribution matrix', 'yellow'))
 print(cont_mat)
 print()
 
-print(cont_mat.sum(axis=1))
-print(cont_mat.sum(axis=0))
+x = cont_mat.sum(axis=1)
+y = cont_mat.sum(axis=0)
 
-#for i in range(len(error_mat[0])):
-#    print(error_mat[0][i])
-#    print(curr_cont_mat[:,i])
-#    print(curr_heur_mat)
-#    print()
-#
+z = x.sum() + y.sum()
+
+x /= z
+y /= z
+print (x)
+print (y)
+print ()
+
+
+for i in range(len(error_mat[0])):
+    error = error_mat[0][i]
+   
+    print('error:', error)
+
+    print('Before error')
+    print('curr heur')
+    print(curr_heur_mat)
+    print('obj heur')
+    print(obj_heur_mat)
+
+    curr_heur_mat[0][0] += error*x[0]
+    curr_heur_mat[0][1] += error*x[1]
+    obj_heur_mat[0][i] += error*y[i]
+
+    print()
+    print('after error')
+    print('curr heur')
+    print(curr_heur_mat)
+    print('obj heur')
+    print(obj_heur_mat)
+    print()
+
+res_mat = np.dot(curr_heur_mat, obj_heur_mat * p_mat)
+
+rank_mat = res_mat.argsort()
+
+#print(colored('expected resultant matrix ranked least to greatest:', 'cyan'))
+#print(rank_exp_mat)
+#print()
+
+print(colored('currency heuristic matrix:', 'green'))
+print(curr_heur_mat)
+print()
+
+print(colored('object heuristic matrix:', 'green'))
+print(obj_heur_mat)
+print()
+
+print(colored('resultant matrix:', 'green'))
+print(res_mat)
+print()
