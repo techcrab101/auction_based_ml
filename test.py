@@ -69,10 +69,19 @@ print(colored('obj cont mat', 'yellow'))
 print(obj_cont_mat)
 print()
 
-cont_mat = (curr_cont_mat + obj_cont_mat)/2
+cont_mat = ((obj_cont_mat + curr_cont_mat) / 
+        (obj_cont_mat.sum() + curr_cont_mat.sum())) #(curr_cont_mat + obj_cont_mat)/2
 
-print(colored('overal contribution matrix', 'yellow'))
+print(colored('overall contribution matrix', 'yellow'))
 print(cont_mat)
 print()
 
+print(cont_mat.sum(axis=1))
+print(cont_mat.sum(axis=0))
 
+#for i in range(len(error_mat[0])):
+#    print(error_mat[0][i])
+#    print(curr_cont_mat[:,i])
+#    print(curr_heur_mat)
+#    print()
+#
