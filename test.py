@@ -5,6 +5,7 @@ import time
 def correct(exp_mat, res_mat, p_mat, obj_heur_mat, curr_heur_mat, learning_rate):
     error_mat = exp_mat - res_mat 
     
+    # TODO: Adjust learning rate based off of error not arbituary assumptions
     learning_rate *= .8
     error_mat *= learning_rate
     
