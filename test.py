@@ -1,36 +1,19 @@
 import numpy as np
 from termcolor import colored
 import time
+import math
 
-def correct(exp_mat, res_mat, p_mat, obj_heur_mat, curr_heur_mat, learning_rate):
-    error_mat = exp_mat - res_mat 
-    
-    # TODO: Adjust learning rate based off of error not arbituary assumptions
-    learning_rate *= .8
-    error_mat *= learning_rate
-    
+def correct(error_mat, p_mat, obj_heur_mat, curr_heur_mat):
     print(colored('error matrix', 'yellow'))
     print(error_mat)
     print()
     
     curr_cont_mat = p_mat/p_mat.sum(axis=0)
     
-    print(colored('currency cont mat', 'yellow'))
-    print(curr_cont_mat)
-    print()
-    
     obj_cont_mat = p_mat/p_mat.sum(axis=1).reshape(curr_type_count,1)
-    
-    print(colored('obj cont mat', 'yellow'))
-    print(obj_cont_mat)
-    print()
     
     cont_mat = ((obj_cont_mat + curr_cont_mat) / 
             (obj_cont_mat.sum() + curr_cont_mat.sum())) #(curr_cont_mat + obj_cont_mat)/2
-    
-    print(colored('overall contribution matrix', 'yellow'))
-    print(cont_mat)
-    print()
     
     x = cont_mat.sum(axis=1)
     y = cont_mat.sum(axis=0)
@@ -39,36 +22,12 @@ def correct(exp_mat, res_mat, p_mat, obj_heur_mat, curr_heur_mat, learning_rate)
     
     x /= z
     y /= z
-    print()
-    print (x)
-    print (y)
-    print ()
     
+    obj_heur_mat += error_mat * y
     
-    for i in range(len(error_mat[0])):
-        error = error_mat[0][i]
+    z = error_mat.sum()
     
-        #print()
-        #print('error:', error)
-        #print()
-        #print('Before error')
-        #print('curr heur')
-        #print(curr_heur_mat)
-        #print('obj heur')
-        #print(obj_heur_mat)
-    
-        for j in range(len(curr_heur_mat[0])):
-            curr_heur_mat[0][j] += error*x[j]
-        
-        obj_heur_mat[0][i] += error*y[i]
-    
-        #print()
-        #print('after error')
-        #print('curr heur')
-        #print(curr_heur_mat)
-        #print('obj heur')
-        #print(obj_heur_mat)
-        #print()
+    curr_heur_mat += x*z
     
     res_mat = np.dot(curr_heur_mat, obj_heur_mat * p_mat)
     
@@ -76,12 +35,11 @@ def correct(exp_mat, res_mat, p_mat, obj_heur_mat, curr_heur_mat, learning_rate)
     
     return res_mat, obj_heur_mat, curr_heur_mat, learning_rate
 
-    pass
-
 p_count = 10
 curr_type_count = 5
 
 # Training Data
+#p_mat = np.random.rand(curr_type_count, p_count)#
 p_mat = np.arange(p_count * curr_type_count).reshape(curr_type_count, p_count)
 exp_mat = np.arange(p_count)
 rank_exp_mat = exp_mat.argsort()
@@ -102,10 +60,6 @@ res_mat = np.dot(curr_heur_mat, obj_heur_mat * p_mat)
 
 rank_mat = res_mat.argsort()
 
-#print(colored('expected resultant matrix ranked least to greatest:', 'cyan'))
-#print(rank_exp_mat)
-#print()
-
 print(colored('currency heuristic matrix:', 'green'))
 print(curr_heur_mat)
 print()
@@ -118,23 +72,31 @@ print(colored('resultant matrix:', 'green'))
 print(res_mat)
 print()
 
-#print(colored('resultant matrix ranked least to greatest:', 'green'))
-#print(rank_mat)
-#print()
-
 # Learning
 # Optimizing for expected matrix
-learning_rate = .02
-for i in range(1000):
+learning_rate = .02 #1/(p_count + curr_type_count) # Max learning rate
+min_learning_rate = .001
+for i in range(500):
     print(colored('i:', 'red'), i)
-    print(learning_rate)
     print()
-    res_mat, obj_heur_mat, curr_heut_mat, learning_rate = correct(exp_mat, res_mat, p_mat, obj_heur_mat, curr_heur_mat, learning_rate)
-
-    #print(colored('expected resultant matrix ranked least to greatest:', 'cyan'))
-    #print(rank_exp_mat)
-    #print()
     
+    error_mat = exp_mat - res_mat
+    print('error mat::')
+    print(error_mat)
+
+    #print('calculated learning rate')
+    #cal_lr = (learning_rate * (np.absolute(error_mat).sum()/len(error_mat))) / initial_err 
+   
+    #if cal_lr > learning_rate or math.isnan(cal_lr):
+    #    cal_lr = learning_rate
+
+    #print(cal_lr)
+    
+    #error_mat *= cal_lr
+    error_mat *= learning_rate
+    learning_rate *= .8
+    res_mat, obj_heur_mat, curr_heut_mat, learning_rate = correct(error_mat, p_mat, obj_heur_mat, curr_heur_mat)
+
     print(colored('currency heuristic matrix:', 'green'))
     print(curr_heur_mat)
     print()
@@ -146,8 +108,7 @@ for i in range(1000):
     print(colored('resultant matrix:', 'green'))
     print(res_mat)
     print()
-
-    #time.sleep(1)
+    #time.sleep(.2)
 
 print(colored('participant matrix:', 'cyan'))
 print(p_mat)
