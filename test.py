@@ -141,4 +141,22 @@ for i in range(100):
     print()
 
 
+print(colored('participant matrix:', 'cyan'))
+print(p_mat)
+print()
 
+print(colored('expected resultant matrix:', 'cyan'))
+print(exp_mat)
+print()
+
+print(colored('currency heuristic matrix:', 'green'))
+print(curr_heur_mat)
+print()
+
+print(colored('object heuristic matrix:', 'green'))
+print(obj_heur_mat)
+print()
+
+print(colored('resultant matrix:', 'green'))
+print(res_mat)
+print()
