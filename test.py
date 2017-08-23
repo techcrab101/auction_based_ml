@@ -25,10 +25,15 @@ def correct(error_mat, obj_learning_rate, curr_learning_rate, p_mat, obj_heur_ma
     print()
 
     obj_heur_mat += (error_mat * obj_learning_rate)* y
-    
-    j = error_mat.sum() * curr_learning_rate
    
-    print('j')
+    # TODO: DOESN'T SCALE WITH DIFFERENT NUMBERS
+    # TODO: DOESN'T SCALE WITH SMALL MATRICES
+    
+    j = error_mat.sum()
+    if abs(j) > 1:
+        j = 1/j # * curr_learning_rate
+   
+    print('actual curr learning rate')
     print(j)
     print()
 
@@ -40,8 +45,8 @@ def correct(error_mat, obj_learning_rate, curr_learning_rate, p_mat, obj_heur_ma
     
     return res_mat, obj_heur_mat, curr_heur_mat
 
-p_count = 20
-curr_type_count = 5
+p_count = 10
+curr_type_count = 20
 
 # Training Data
 #p_mat = np.random.rand(curr_type_count, p_count)#
@@ -80,7 +85,7 @@ print()
 # Learning
 # Optimizing for expected matrix
 obj_learning_rate = .02 #1/(p_count + curr_type_count) # Max learning rate
-curr_learning_rate = .001
+curr_learning_rate = 1.1
 
 for i in range(100):
     print(colored('i:', 'red'), i)
@@ -102,6 +107,14 @@ for i in range(100):
     res_mat, obj_heur_mat, curr_heut_mat = correct(error_mat, obj_learning_rate , curr_learning_rate, 
             p_mat, obj_heur_mat, curr_heur_mat)
 
+    print(colored('participant matrix:', 'cyan'))
+    print(p_mat)
+    print()
+    
+    print(colored('expected resultant matrix:', 'cyan'))
+    print(exp_mat)
+    print()
+
     print(colored('currency heuristic matrix:', 'green'))
     print(curr_heur_mat)
     print()
@@ -113,30 +126,3 @@ for i in range(100):
     print(colored('resultant matrix:', 'green'))
     print(res_mat)
     print()
-    #time.sleep(.2)
-
-print(colored('participant matrix:', 'cyan'))
-print(p_mat)
-print()
-
-print(colored('expected resultant matrix:', 'cyan'))
-print(exp_mat)
-print()
-
-print(colored('currency heuristic matrix:', 'green'))
-print(curr_heur_mat)
-print()
-
-print(colored('object heuristic matrix:', 'green'))
-print(obj_heur_mat)
-print()
-
-print(colored('resultant matrix:', 'green'))
-print(res_mat)
-print()
-
-error_mat = exp_mat - res_mat 
-
-print(colored('error matrix', 'yellow'))
-print(error_mat)
-print()
