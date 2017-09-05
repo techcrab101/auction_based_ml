@@ -5,12 +5,26 @@ import math
 
 class clf():
     def __init__(self, p_count, curr_type_count):
-        # Algorithm
+        """Initializes the classifier with the right sizes
+
+        Keyword Arguments: 
+        p_count -- The number of individuals of a population. The number of columns of the input matrix
+        curr_type_count -- The number of features of an individual. The number of rows of the input matrix
+        """
+        # TODO: Make the p_count scalable, I think?
         self.curr_heur_mat = np.ones([1, curr_type_count], dtype=float)
         self.obj_heur_mat = np.ones([1, p_count], dtype=float)
         pass
     
     def correct(self, error_mat, obj_learning_rate, curr_learning_rate, p_mat):
+        """Corrects for the error matrix, modifying both heuristic vectors, and returns the resultant matrix
+        
+        Keyword Arguments:
+        error_mat -- The difference between the expected and resultant vectors
+        obj_learning_rate -- The multiplier of the object error correction, to prevent over correcting
+        curr_learning_rate -- The multiplier of the currency error correction, to prevent over correcting
+        p_mat -- The input matrix, used to find contribution of error
+        """
         curr_cont_mat = p_mat/p_mat.sum(axis=0)
     
         print(curr_cont_mat)
@@ -55,6 +69,16 @@ class clf():
         return res_mat
 
     def train(self, x, y, correcting_range, obj_learning_rate=0.1, curr_learning_rate=0.1):
+        """Adjusts the curr_heur and obj_heur based on x,y training data
+
+        Keyword Arguments:
+        x -- The input data. Should be a list of 2D matrices (generations) or a single 2D matrix (a population)
+        y -- The output data. Should be a list of vectors or a single vector
+        correcting_range -- The number of times the algorithm runs to correct for a new error
+        obj_learning_rate -- The multiplier for the obj error correction (default=0.1)
+        curr_learning_rate -- The multiplier for the curr error correction (default=0.1)
+        """
+        
         for i in range(len(x)):
             p_mat = x[i]
             exp_mat = y[i]
@@ -102,7 +126,17 @@ class clf():
                 print()
 
     def predict(self, x):
-        res_mat = np.dot(self.curr_heur_mat, self.obj_heur_mat * x)
+        """Predicts the output based on current heuristics
+
+        input x can either be a 2d matrix or a vector
+        obj_heur_mat is applied only to a 2d matrix
+        """
+        try:
+            x = self.obj_heur_mat * x
+        except:
+            pass
+        res_mat = np.dot(self.curr_heur_mat, x)
+        
         return res_mat
 
 
