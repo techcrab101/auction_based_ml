@@ -1,4 +1,3 @@
-import numpy as np
 import copy
 from termcolor import colored
 
@@ -154,3 +153,5 @@ for i in range(y):
 auction_alg = auction_alg(people,objects)
 
 auction_alg.perform_auction_process()
+
+# TODO: Test to make sure auction alg works
