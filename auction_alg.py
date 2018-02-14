@@ -56,7 +56,6 @@ def display_status(people, objects):
         stat = i.get_status()
         print(stat)
         print()
-
     for i in list(objects.values()):
         print(colored('The Objects', 'yellow'))
         stat = i.get_status()
@@ -74,6 +73,7 @@ def check_happiness(people, objects):
     return True
 
 y = 10
+epsilon = 1/(y+1)
 
 people = {}
 objects = {}
@@ -97,20 +97,45 @@ while not(check_happiness(people, objects)):
     pOI = unhappy_people_ID[0]
 
     person_i = people[pOI]
-    object_i = objects[pI.obj]
+    object_i = objects[person_i.object]
 
-    object_j = objects[people[pOI].max_pot_obj]
-    person_i2 = people[objJ.ID]
-
+    object_j = objects[person_i.max_pot_obj]
+    person_j = people[object_j.person]
 
 
     nij = person_i.get_benefit(object_j)
+
     cpy_objects = copy.deepcopy(objects)
-    del cpy_objects[pI.obj]
-    nij2 = get_max_ben(person_i, cpy_objects)[0]
+    del cpy_objects[person_i.max_pot_obj]
 
-    xj = nij - nij2
+    a = get_max_ben(person_i, cpy_objects)
+
+    nij2 = person_i.get_benefit(a[1])
+
+    xj = nij - nij2 + epsilon
     object_j.cost = object_j.get_costs() + xj
-    pI.set_pairing(objJ)
+    person_i.set_pairing(object_j)
+    person_j.set_pairing(object_i)
 
-    pass
+    object_j.person = person_i.ID
+    object_i.person = person_j.ID
+
+    people[person_i.ID] = person_i
+    people[person_j.ID] = person_j
+    objects[object_i.ID] = object_i
+    objects[object_j.ID] = object_j
+    
+    # recalculate happiness measure
+
+    for i in range(len(people)):
+        best = get_max_ben(people[i], objects)
+        if best[0] - epsilon <= people[i].benefit:
+            people[i].max_pot_ben = people[i].benefit
+            people[i].max_pot_obj = people[i].object
+            people[i].happy = True
+            continue
+        people[i].max_pot_ben = best[0]
+        people[i].max_pot_obj = best[1].ID
+        people[i].happy = True if people[i].max_pot_ben == people[i].benefit else False  
+
+    display_status(people, objects)
