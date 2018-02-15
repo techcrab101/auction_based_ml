@@ -133,25 +133,25 @@ class auction_alg():
             self.perform_auction_step()
             self.display_status()
 
-y = 10
-
-people = {}
-objects = {}
-
-for i in range(y):
-    people[i] = Person(i, i)
-    objects[i] = Object(i, y - i)
-
-for i in range(y):
-    people[i].set_pairing(objects[i])
-    objects[i].person = people[i].ID
-    best = get_max_ben(people[i], objects)
-    people[i].max_pot_ben = best[0]
-    people[i].max_pot_obj = best[1].ID
-    people[i].happy = True if people[i].max_pot_ben == people[i].benefit else False  
-
-auction_alg = auction_alg(people,objects)
-
-auction_alg.perform_auction_process()
-
-# TODO: Test to make sure auction alg works
+# y = 10
+# 
+# people = {}
+# objects = {}
+# 
+# for i in range(y):
+#     people[i] = Person(i, i)
+#     objects[i] = Object(i, y - i)
+# 
+# for i in range(y):
+#     people[i].set_pairing(objects[i])
+#     objects[i].person = people[i].ID
+#     best = get_max_ben(people[i], objects)
+#     people[i].max_pot_ben = best[0]
+#     people[i].max_pot_obj = best[1].ID
+#     people[i].happy = True if people[i].max_pot_ben == people[i].benefit else False  
+# 
+# auction_alg = auction_alg(people,objects)
+# 
+# auction_alg.perform_auction_process()
+# 
+# # TODO: Test to make sure auction alg works
