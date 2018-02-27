@@ -1,5 +1,6 @@
 import copy
 from termcolor import colored
+import numpy as np
 
 class Person():
     def __init__(self, ID, needs):
@@ -53,11 +54,29 @@ def get_max_ben(person, objects):
     return max(ben_ID_list, key=lambda y: y[0])
 
 class auction_alg():
-    def __init__(self, people, objects, epsilon=None):
-        self.people = people
-        self.objects = objects
+    
+    def __init__(self, p, o, epsilon=None):
+        self.p = p
+        self.o = o
+        self.people = {}
+        self.objects = {}
+    
+        self.weights = np.random.rand(len(self.p[0]))
+
+        for i in range(len(p)):
+            self.people[i] = Person(i, np.dot(self.p[i], self.weights))
+            self.objects[i] = Object(i, self.o[i][0])
+        
+        for i in self.people:
+            self.people[i].set_pairing(self.objects[i])
+            self.objects[i].person = self.people[i].ID
+            best = get_max_ben(self.people[i], self.objects)
+            self.people[i].max_pot_ben = best[0]
+            self.people[i].max_pot_obj = best[1].ID
+            self.people[i].happy = True if self.people[i].max_pot_ben == self.people[i].benefit else False  
+
         if epsilon is None:
-            self.epsilon = 1/(len(people) + 1)
+            self.epsilon = 1/(len(self.people) + 1)
         else:
             self.epsilon = epsilon
 
@@ -81,8 +100,8 @@ class auction_alg():
         return True
 
     def calculate_happiness(self):
-        for i in range(len(self.people)):
-            best = get_max_ben(self.people[i], objects)
+        for i in self.people:
+            best = get_max_ben(self.people[i], self.objects)
             if best[0] - self.epsilon <= self.people[i].benefit:
                 self.people[i].max_pot_ben = self.people[i].benefit
                 self.people[i].max_pot_obj = self.people[i].object
@@ -95,7 +114,8 @@ class auction_alg():
     def perform_auction_step(self):
         unhappy_people = filter(lambda x: x.happy is False, list(self.people.values()))
         unhappy_people_ID = list(map(lambda y: y.ID, unhappy_people))
-        print(len(unhappy_people_ID))
+        print("The number of unhappies: ", len(unhappy_people_ID))
+        print("Total number of people: ", len(self.people))
 
         person_i = self.people[unhappy_people_ID[0]]
         object_i = self.objects[person_i.object]
@@ -132,6 +152,7 @@ class auction_alg():
         while not(self.check_happiness()):
             self.perform_auction_step()
             self.display_status()
+
 
 # y = 10
 # 
