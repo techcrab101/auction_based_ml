@@ -49,16 +49,21 @@ class clf():
         """
         curr_cont_mat = p_mat/p_mat.sum(axis=0)
     
+        obj_cont_mat = p_mat/p_mat.sum(axis=1).reshape(curr_type_count,1)
+
+        cont_mat = ((obj_cont_mat + curr_cont_mat) / (obj_cont_mat.sum() + curr_cont_mat.sum()))
+
         if display:
-            print('contribution matrix')
+            print('currency cont matrix')
             print(curr_cont_mat)
             print()
-    
-        obj_cont_mat = p_mat/p_mat.sum(axis=1).reshape(curr_type_count,1)
-        
-        cont_mat = ((obj_cont_mat + curr_cont_mat) / 
-                (obj_cont_mat.sum() + curr_cont_mat.sum())) #(curr_cont_mat + obj_cont_mat)/2
-        
+            print('obj cont matrix')
+            print(obj_cont_mat)
+            print()
+            print('overall contribution matrix')
+            print(cont_mat)
+            print()
+            
         x = cont_mat.sum(axis=1)
         y = cont_mat.sum(axis=0)
      
@@ -75,17 +80,6 @@ class clf():
     
         self.obj_heur_mat += (error_mat * obj_learning_rate)* y
        
-        # TODO: DOESN'T SCALE WITH DIFFERENT NUMBERS
-        # TODO: DOESN'T SCALE WITH SMALL MATRICES
-        
-        # j = error_mat.sum()
-        # if abs(j) > 1:
-        #     j = 1/j # * curr_learning_rate
-       
-        #print('actual curr learning rate')
-        #print(j)
-        #print()
-    
         self.curr_heur_mat += (error_mat * curr_learning_rate).sum() * x # x * j
         
         res_mat = np.dot(self.curr_heur_mat, self.obj_heur_mat * p_mat)
@@ -138,10 +132,6 @@ class clf():
                 print(colored('participant matrix:', 'cyan'))
                 print(p_mat)
                 print()
-                
-                print(colored('expected resultant matrix:', 'cyan'))
-                print(exp_mat)
-                print()
         
                 print(colored('currency heuristic matrix:', 'green'))
                 print(self.curr_heur_mat)
@@ -151,6 +141,10 @@ class clf():
                 print(self.obj_heur_mat)
                 print()
                 
+                print(colored('expected resultant matrix:', 'cyan'))
+                print(exp_mat)
+                print()
+
                 print(colored('resultant matrix:', 'green'))
                 print(res_mat)
                 print()
@@ -159,6 +153,16 @@ class clf():
         idx = (np.abs(self.y-value)).argmin()
         return self.y[idx]
 
+    def get_obj_multiplier(self, category):
+        indices = [i for i, x in enumerate(self.y) if x == category]
+
+        rates = []
+
+        for i in indices:
+            rates.append(self.obj_heur_mat[0][i])
+        # Average Method
+        return sum(rates) / len(rates)
+
     def predict(self, x):
         """Predicts the output based on current heuristics
 
@@ -166,20 +170,30 @@ class clf():
         obj_heur_mat is applied only to a 2d matrix
         """
 
-        res_mat = np.dot(self.curr_heur_mat, x)
-        
-        label = self.find_nearest(res_mat[0])
+        curr_confidence = 0
+        curr_res_mat = []
 
-        projected_error = abs(label - res_mat[0])
+        categories = list(np.unique(self.y))
 
-        projected_confidence = (label-projected_error) / label
+        for i in categories:
+            rate = self.get_obj_multiplier(i)
+            res_mat = np.dot(self.curr_heur_mat, rate * x)
+            
+            label = self.find_nearest(res_mat[0])
+    
+            projected_error = abs(label - res_mat[0])
+    
+            if label == 0:
+                projected_confidence = 1 - projected_error
+            else:
+                projected_confidence = (label-projected_error) / label
 
-        if label == 0:
-            projected_confidence = 1 - projected_error
-
-        res_mat = [res_mat[0], label, projected_error, projected_confidence]
-
-        return res_mat
+            res_mat = [res_mat[0], label, projected_error, projected_confidence]
+            if projected_confidence > curr_confidence:
+                curr_error = projected_confidence
+                curr_res_mat = res_mat
+    
+        return curr_res_mat
     
     def plot_price_diff(self, category):
         indices = [i for i, x in enumerate(self.y) if x == category]
@@ -198,7 +212,6 @@ class clf():
         plt.ylabel('The object heur. The price of the individual categories')
         plt.xlabel('The object amount. Or time')
         plt.show()
-
 
 parser = argparse.ArgumentParser(description='TODO: Add this here')
 
@@ -220,7 +233,7 @@ _clf = clf(p_count, curr_type_count)
 
 # Learning
 # Optimizing for expected matrix
-obj_learning_rate = .001
+obj_learning_rate = 1
 curr_learning_rate = .001
 
 _clf.train(x, y, 100, obj_learning_rate, curr_learning_rate, False)
@@ -247,7 +260,6 @@ for i, val in enumerate(test_x.T):
     print(expected)
     prediction = _clf.predict(val)
     print(colored(prediction,'cyan'))
-    print()
 
     if expected == prediction[1]:
         correct += 1
@@ -261,6 +273,8 @@ for i, val in enumerate(test_x.T):
 
         incorrect_confidence.append(prediction[3])
         incorrect_actual_confidence.append(actual_confidence)
+        print(colored('ERROR', 'red'))
+    print()
 
     total += 1
 
@@ -268,7 +282,7 @@ percent_correct = correct/total * 100
 percent_incorrect = incorrect/total * 100
 avg_correct_confidence = sum(correct_confidence)/len(correct_confidence)
 avg_incorrect_confidence = sum(incorrect_confidence)/len(incorrect_confidence)
-avg_incorrect_actual_confidence = sum(incorrect_actual_confidence)/len(incorrect_actual_confidence)
+avg_incorrect_percent_error = sum(incorrect_actual_confidence)/len(incorrect_actual_confidence)
 avg_confidence = sum(incorrect_confidence + correct_confidence)/len(incorrect_confidence + correct_confidence)
 
 
@@ -282,5 +296,5 @@ print('Percent incorrect:', percent_incorrect)
 print('Average confidence:', avg_confidence)
 print('Avg correct confidence:', avg_correct_confidence)
 print('Avg incorrect confidence:', avg_incorrect_confidence)
-print('Avg actual incorrect confidence:', avg_incorrect_actual_confidence)
+print('Avg actual incorrect percent error:', avg_incorrect_percent_error)
 
