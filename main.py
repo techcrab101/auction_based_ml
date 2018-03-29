@@ -4,6 +4,24 @@ import time
 import math
 import pickle
 import matplotlib.pyplot as plt
+import argparse
+
+def load_data(data_file):
+    data_file = open(data_file, 'rb')
+    
+    raw_data = pickle.load(data_file)
+    raw_data = np.array(raw_data)
+    
+    x = raw_data[:,:len(raw_data[0])-1]
+    y = raw_data[:,-1:]
+    
+    new_y = []
+    for i in y:
+        new_y.append(i[0])
+    y = np.array(new_y)
+    
+    x = np.rot90(x)
+    return x, y
 
 class clf():
     def __init__(self, p_count, curr_type_count):
@@ -20,7 +38,7 @@ class clf():
         self.y = None
         pass
     
-    def correct(self, error_mat, obj_learning_rate, curr_learning_rate, p_mat):
+    def correct(self, error_mat, obj_learning_rate, curr_learning_rate, p_mat, display=True):
         """Corrects for the error matrix, modifying both heuristic vectors, and returns the resultant matrix
         
         Keyword Arguments:
@@ -31,7 +49,10 @@ class clf():
         """
         curr_cont_mat = p_mat/p_mat.sum(axis=0)
     
-        print(curr_cont_mat)
+        if display:
+            print('contribution matrix')
+            print(curr_cont_mat)
+            print()
     
         obj_cont_mat = p_mat/p_mat.sum(axis=1).reshape(curr_type_count,1)
         
@@ -46,10 +67,11 @@ class clf():
         x /= z
         y /= z
        
-        print('x and y')
-        print(x)
-        print(y)
-        print()
+        if display:
+            print('x and y')
+            print(x)
+            print(y)
+            print()
     
         self.obj_heur_mat += (error_mat * obj_learning_rate)* y
        
@@ -72,46 +94,47 @@ class clf():
         
         return res_mat
 
-    def train(self, x, y, correcting_range, obj_learning_rate=0.1, curr_learning_rate=0.1):
+    def train(self, x, y, correcting_range, obj_learning_rate=0.1, curr_learning_rate=0.1, display=True):
         """Adjusts the curr_heur and obj_heur based on x,y training data
 
         Keyword Arguments:
-        x -- The input data. Should be a list of 2D matrices (generations) or a single 2D matrix (a population)
-        y -- The output data. Should be a list of vectors or a single vector
+        x -- The input data. Should be a single 2D matrix (a population)
+        y -- The output data. Should be a single vector
         correcting_range -- The number of times the algorithm runs to correct for a new error
         obj_learning_rate -- The multiplier for the obj error correction (default=0.1)
         curr_learning_rate -- The multiplier for the curr error correction (default=0.1)
+        display -- Boolean on whether or not the training process should be displayed. (default=True)
         """
         
         self.x = x
         self.y = y
 
-        for i in range(len(self.x)):
-            p_mat = self.x[i]
-            exp_mat = self.y[i]
+        #for i in range(len(self.x)):
+        p_mat = self.x
+        exp_mat = self.y
         
-            res_mat = np.dot(self.curr_heur_mat, self.obj_heur_mat * p_mat)
+        res_mat = np.dot(self.curr_heur_mat, self.obj_heur_mat * p_mat)
 
-            for j in range(correcting_range):
-                print(colored('i:', 'red'), i)
+        for j in range(correcting_range):
+            if display:
+                print(colored('j:', 'red'), j)
                 print()
-                
-            
-                error_mat = (exp_mat - res_mat)
+        
+            error_mat = (exp_mat - res_mat)
+            if display:
                 print(colored('error mat', 'yellow'))
                 print(error_mat)
                 print()
-                
                 print(colored('object learning rate', 'yellow'))
                 print(obj_learning_rate)
                 print()
-            
                 print(colored('curr learning rate', 'yellow'))
                 print(curr_learning_rate)
                 print()
-            
-                res_mat = self.correct(error_mat, obj_learning_rate , curr_learning_rate, p_mat)
-            
+        
+            res_mat = self.correct(error_mat, obj_learning_rate , curr_learning_rate, p_mat, display)
+        
+            if display:
                 print(colored('participant matrix:', 'cyan'))
                 print(p_mat)
                 print()
@@ -119,7 +142,7 @@ class clf():
                 print(colored('expected resultant matrix:', 'cyan'))
                 print(exp_mat)
                 print()
-            
+        
                 print(colored('currency heuristic matrix:', 'green'))
                 print(self.curr_heur_mat)
                 print()
@@ -132,22 +155,34 @@ class clf():
                 print(res_mat)
                 print()
 
+    def find_nearest(self, value):
+        idx = (np.abs(self.y-value)).argmin()
+        return self.y[idx]
+
     def predict(self, x):
         """Predicts the output based on current heuristics
 
-        input x can either be a 2d matrix or a vector
+        input x is a vector of features
         obj_heur_mat is applied only to a 2d matrix
         """
-        try:
-            x = self.obj_heur_mat * x
-        except:
-            pass
+
         res_mat = np.dot(self.curr_heur_mat, x)
         
+        label = self.find_nearest(res_mat[0])
+
+        projected_error = abs(label - res_mat[0])
+
+        projected_confidence = (label-projected_error) / label
+
+        if label == 0:
+            projected_confidence = 1 - projected_error
+
+        res_mat = [res_mat[0], label, projected_error, projected_confidence]
+
         return res_mat
     
     def plot_price_diff(self, category):
-        indices = [i for i, x in enumerate(self.y[0]) if x == category]
+        indices = [i for i, x in enumerate(self.y) if x == category]
         print(indices)
 
         plt_x = []
@@ -165,58 +200,87 @@ class clf():
         plt.show()
 
 
-p_count = 150 
-curr_type_count = 4
+parser = argparse.ArgumentParser(description='TODO: Add this here')
+
+parser.add_argument('-d', '--data_set', required=True,
+        help='Path to training data')
+
+parser.add_argument('-t', '--test_data', required=False, 
+        help='Path to test data set')
+
+args = vars(parser.parse_args())
+
+x, y = load_data(args['data_set'])
+
+
+p_count = x.shape[1] # Number of data samples 
+curr_type_count = x.shape[0] # Number of features per data sample
 
 _clf = clf(p_count, curr_type_count)
 
-# Training Data
-p_mat = np.random.rand(curr_type_count, p_count)#
-p_mat = np.arange(p_count * curr_type_count).reshape(curr_type_count, p_count)
-exp_mat = np.arange(p_count)#np.random.rand(1,p_count)#np.arange(p_count)
-rank_exp_mat = exp_mat.argsort()
-
-data_file = open('training_data/data.pkl', 'rb')
-
-raw_data = pickle.load(data_file)
-raw_data = np.array(raw_data)
-
-x = raw_data[:,:len(raw_data[0])-1]
-y = raw_data[:,-1:]
-
-input_x = [p_mat]
-input_y = [exp_mat]
-
-
-# print(input_x)
-# print(input_y)
-# print()
-# print()
-
-
-new_y = []
-for i in y:
-    new_y.append(i[0])
-y = [np.array(new_y)]
-
-x = [np.rot90(x)]
-
-print(x)
-print(y)
-
-print()
-print()
-
-print(len(x))
-print(len(x[0]))
-
 # Learning
 # Optimizing for expected matrix
-obj_learning_rate = .001#1/(p_count * curr_type_count)#.02 #1/(p_count + curr_type_count) # Max learning rate
-curr_learning_rate = .001#obj_learning_rate
+obj_learning_rate = .001
+curr_learning_rate = .001
 
-_clf.train(x, y, 100, obj_learning_rate, curr_learning_rate)
+_clf.train(x, y, 100, obj_learning_rate, curr_learning_rate, False)
 
 _clf.plot_price_diff(0)
 _clf.plot_price_diff(1)
 _clf.plot_price_diff(2)
+
+if (args['test_data'] is not None):
+    test_x, test_y = load_data(args['test_data'])
+else:
+    quit()
+
+total = 0
+correct = 0
+incorrect = 0
+correct_confidence = []
+incorrect_confidence = []
+incorrect_actual_confidence = []
+
+for i, val in enumerate(test_x.T):
+    print(val)
+    expected = test_y[i]
+    print(expected)
+    prediction = _clf.predict(val)
+    print(colored(prediction,'cyan'))
+    print()
+
+    if expected == prediction[1]:
+        correct += 1
+        correct_confidence.append(prediction[3])
+    else:
+        incorrect += 1
+
+        actual_error = abs(expected - prediction[0])
+
+        actual_confidence = (expected-actual_error) / expected
+
+        incorrect_confidence.append(prediction[3])
+        incorrect_actual_confidence.append(actual_confidence)
+
+    total += 1
+
+percent_correct = correct/total * 100
+percent_incorrect = incorrect/total * 100
+avg_correct_confidence = sum(correct_confidence)/len(correct_confidence)
+avg_incorrect_confidence = sum(incorrect_confidence)/len(incorrect_confidence)
+avg_incorrect_actual_confidence = sum(incorrect_actual_confidence)/len(incorrect_actual_confidence)
+avg_confidence = sum(incorrect_confidence + correct_confidence)/len(incorrect_confidence + correct_confidence)
+
+
+print('Total tested:', total)
+print('Total correct:', correct)
+print('Total incorrect:', incorrect)
+print()
+
+print('Percent correct:', percent_correct)
+print('Percent incorrect:', percent_incorrect)
+print('Average confidence:', avg_confidence)
+print('Avg correct confidence:', avg_correct_confidence)
+print('Avg incorrect confidence:', avg_incorrect_confidence)
+print('Avg actual incorrect confidence:', avg_incorrect_actual_confidence)
+
